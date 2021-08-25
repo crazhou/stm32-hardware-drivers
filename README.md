@@ -1,18 +1,21 @@
 # stm32-hardware-drivers
 
+这个仓库收集整理了一些常见的显示屏，传感器的驱动程序，仅大家参考学习！
+
 1. 基于 stm32F103C8 开发
-2. 基于 STM32 官方标准库开发 这个 STM32F10x Standard Peripherals Firmware Library
-3. 全部 例程 通过实际测试，还挺好玩的 😁😁
+2. 基于 STM32 官方标准库(STM32F10x Standard Peripherals Firmware Library) 开发
+3. 全部代码通过实际测试，请放心使用
+4. PS : 还挺好玩的 😁😁
 
 # 分类
 
 - 时钟类 DS1302 DS3231
 - 温湿度 AM2302 LM75a
-- 显示类 Max7219 数码管和点阵 I2C 驱动 OLDE 屏， e-paper 墨水屏
+- 显示类 Max7219 数码管和点阵 I2C 驱动 OLDE 屏， 2.9 inch e-paper 微雪墨水屏
 
 # 一些硬件
 
-![max7219点阵屏](./imgs/IMG_20210825_234853.jpg)
+<img src="./imgs/IMG_20210825_234853.jpg" width="50%" alt="max7219点阵屏">
 
 # 我想说的
 
