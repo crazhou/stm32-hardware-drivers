@@ -24,10 +24,12 @@ int8_t indexOf(char *str, uint8_t ch)
 
 /*
  * 初始化 GPIO 端口
+ * 我的GPIO 实时 已经 默认初始化了，如果没有，请放开第 32 行注释 
  */
 void Max7219_GPIOInit(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
+  // RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB, ENABLE);
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
   GPIO_InitStructure.GPIO_Pin = MAX7219_CS_PIN | MAX7219_CLK_PIN | MAX7219_DATA_PIN;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -59,7 +61,7 @@ void Max7219_Digital_Init(uint8_t intensity)
   Max7219_test(0x00);
 }
 /*  
- * 初始化 LED 显示屏  len 为点阵屏个数， intensity 为每个亮度
+ * 初始化 LED 显示屏 intensity 为每个亮度 0x01 ~ 0x0f
  */
 void Max7219_Led_Init(uint8_t intensity)
 {
@@ -77,7 +79,7 @@ void Max7219_Led_Init(uint8_t intensity)
 
   Max7219_shutdown(NORMAL_MODE);
 
-  // 开始测试
+  // 开始屏幕测试
   Max7219_test(0x01);
   delay_ms(1000);
   Max7219_test(0x00);
@@ -85,7 +87,6 @@ void Max7219_Led_Init(uint8_t intensity)
 
 void Max7219_WriteByte(uint8_t data)
 {
-
   int8_t i;
   uint8_t tmp;
 

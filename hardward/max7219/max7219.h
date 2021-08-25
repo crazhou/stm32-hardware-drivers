@@ -39,6 +39,7 @@ void Max7219_Digital_Init(uint8_t intensity);
 // 数码管显示
 void Max7219_digit(uint8_t digit, uint8_t data);
 
+// 初始化点阵屏
 void Max7219_Led_Init(uint8_t intensity);
 void Max7219_display(uint8_t x, char data);
 
