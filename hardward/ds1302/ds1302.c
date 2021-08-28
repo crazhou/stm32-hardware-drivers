@@ -2,115 +2,177 @@
 
 void DS1302_Init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE); //¿ªÆôGPIOBÍâÉèÊ±ÖÓ
-	GPIO_InitStructure.GPIO_Pin = DS1302_RST | DS1302_CLK;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; //ÍÆÍìÊä³ö
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(DS1302_PORT, &GPIO_InitStructure);
+  GPIO_InitTypeDef GPIO_InitStructure;
+
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE); //å¼€å¯GPIOBå¤–è®¾æ—¶é’Ÿ
+
+  GPIO_InitStructure.GPIO_Pin = DS1302_CE | DS1302_CLK;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; //æ¨æŒ½è¾“å‡º
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(DS1302_PORT, &GPIO_InitStructure);
 }
 
+// å¼€å§‹å†™æ•°æ®
 void DS1302_write_init(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
+
   GPIO_InitStructure.GPIO_Pin = DS1302_DATA;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; //ÍÆÍìÊä³ö
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; //æ¨æŒ½è¾“å‡º
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
   GPIO_Init(DS1302_PORT, &GPIO_InitStructure);
-  GPIO_WriteBit(DS1302_PORT, DS1302_RST, (BitAction)1);
+
+  GPIO_SetBits(DS1302_PORT, DS1302_CE);
 }
 
+// å¼€å§‹è¯»æ•°æ®
 void DS1302_read_init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Pin = DS1302_DATA;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //ÉÏÀ­ÊäÈë
-	GPIO_Init(DS1302_PORT, &GPIO_InitStructure);
-  GPIO_WriteBit(DS1302_PORT, DS1302_RST, (BitAction)1);
+  GPIO_InitTypeDef GPIO_InitStructure;
+
+  GPIO_InitStructure.GPIO_Pin = DS1302_DATA;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; //ä¸Šæ‹‰è¾“å…¥
+
+  GPIO_Init(DS1302_PORT, &GPIO_InitStructure);
+
+  GPIO_SetBits(DS1302_PORT, DS1302_CE);
 }
 
-// Ïòds1302 Ğ´Ò»¸ö×Ö½ÚÊı¾İ
-void ds1302_write_byte(u8 addr, u8 d)
+// å‘ds1302 å†™ä¸€ä¸ªå­—èŠ‚æ•°æ®
+void ds1302_write_byte(u8 addr, u8 data)
 {
-	u8 i,m =d/10;
-	// BCD Âë×ª»»
-	d = (m<<4) + d%10;
-	DS1302_write_init();
-	
-	for (i = 0; i <8; i++)
-	{
-		GPIO_WriteBit(DS1302_PORT, DS1302_DATA, (BitAction)(addr & 0x01));
-		GPIO_SetBits(DS1302_PORT,DS1302_CLK);
-		GPIO_ResetBits(DS1302_PORT,DS1302_CLK);
-		addr>>= 1;
-	}
-	
-	for (i = 0; i <8; i++)
-	{
-		GPIO_WriteBit(DS1302_PORT, DS1302_DATA, (BitAction)(d & 0x01));
-		GPIO_SetBits(DS1302_PORT,DS1302_CLK);
-		GPIO_ResetBits(DS1302_PORT,DS1302_CLK);
-		d>>= 1;
-	}
-	GPIO_WriteBit(DS1302_PORT, DS1302_RST, (BitAction)0);
+  u8 i, m = data / 10;
+
+  // BCD ç è½¬æ¢
+  data = (m << data) + data % 10;
+
+  DS1302_write_init();
+
+  for (i = 0; i < 8; i++)
+  {
+    GPIO_WriteBit(DS1302_PORT, DS1302_DATA, (BitAction)(addr & 0x01));
+    GPIO_SetBits(DS1302_PORT, DS1302_CLK);
+    GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
+    addr >>= 1;
+  }
+
+  for (i = 0; i < 8; i++)
+  {
+    GPIO_WriteBit(DS1302_PORT, DS1302_DATA, (BitAction)(data & 0x01));
+    GPIO_SetBits(DS1302_PORT, DS1302_CLK);
+    GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
+    data >>= 1;
+  }
+  GPIO_ResetBits(DS1302_PORT, DS1302_CE);
 }
 
+/* è¯»å–ä¸€ä¸ªå­—èŠ‚çš„æ•°æ® */
 u8 ds1302_read_byte(u8 addr)
 {
-	 uint8_t i,temp,k;
-	 DS1302_write_init();
-	 addr+=1;
-	 for(i = 0; i< 8;i++) {
-	 	GPIO_WriteBit(DS1302_PORT, DS1302_DATA, (BitAction)(addr & 0x01));	
-		GPIO_SetBits(DS1302_PORT,DS1302_CLK);
-		GPIO_ResetBits(DS1302_PORT,DS1302_CLK);
-		addr >>= 1;
-	 }
-	 DS1302_read_init();
+  uint8_t i, temp, k;
+  DS1302_write_init();
+  addr += 1;
+  for (i = 0; i < 8; i++)
+  {
+    GPIO_WriteBit(DS1302_PORT, DS1302_DATA, (BitAction)(addr & 0x01));
+    GPIO_SetBits(DS1302_PORT, DS1302_CLK);
+    GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
+    addr >>= 1;
+  }
 
-	 temp = 0;
-	 k = 1;
-	 for (i = 0; i < 8; i ++) {
-		if (GPIO_ReadInputDataBit(DS1302_PORT, DS1302_DATA)) {
-		// BCD Âë×ª»»
-			if(i < 4) {
-			  temp += k;
-			} else {
-			  temp += (k>>4)*10;
-			}
-		}
-		k<<=1;
-		GPIO_SetBits(DS1302_PORT,DS1302_CLK);
-		GPIO_ResetBits(DS1302_PORT,DS1302_CLK);
-	 }
-	 GPIO_WriteBit(DS1302_PORT, DS1302_RST, (BitAction)0);
-	 return temp;
+  DS1302_read_init();
+
+  temp = 0;
+  k = 1;
+  for (i = 0; i < 8; i++)
+  {
+    if (GPIO_ReadInputDataBit(DS1302_PORT, DS1302_DATA))
+    {
+      // BCD ç è½¬æ¢
+      if (i < 4)
+        temp += k;
+      else
+        temp += (k >> 4) * 10;
+    }
+    k <<= 1;
+    GPIO_SetBits(DS1302_PORT, DS1302_CLK);
+    GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
+  }
+  GPIO_ResetBits(DS1302_PORT, DS1302_CE);
+  return temp;
 }
 
-void DS1302_write_time(uint8_t time_buf[])
+/*
+ * ä½¿ç”¨burst æ¨¡å¼è¯»å–æ•°æ® 
+ */
+void ds1302_read_burst(u8 addr, uint8_t *time_buf)
 {
-		ds1302_write_byte(ds1302_control_add,0x00); //¹Ø±ÕĞ´±£»¤
-		ds1302_write_byte(ds1302_sec_add,0x80); //ÔİÍ£Ê±ÖÓ
-		//ds1302_write_byte(ds1302_charger_add,0xa9); //ä¸Á÷³äµç
-	
-		ds1302_write_byte(ds1302_year_add,time_buf[0]); //Äê
-		ds1302_write_byte(ds1302_month_add,time_buf[1]); //ÔÂ
-		ds1302_write_byte(ds1302_date_add,time_buf[2]); //ÈÕ
-		ds1302_write_byte(ds1302_hr_add,time_buf[3]); //Ê±
-		ds1302_write_byte(ds1302_min_add,time_buf[4]); //·Ö
-		ds1302_write_byte(ds1302_sec_add,time_buf[5]); //Ãë
-		ds1302_write_byte(ds1302_day_add,time_buf[6]); //ÖÜ
-		ds1302_write_byte(ds1302_control_add,0x80); //´ò¿ªĞ´±£»¤
+  DS1302_write_init();
 
+  addr++; // +1 å˜æˆè¯»åœ°å€
+  for (uint8_t i = 0; i < 8; i++)
+  {
+    GPIO_WriteBit(DS1302_PORT, DS1302_DATA, (BitAction)(addr & 0x01));
+    GPIO_SetBits(DS1302_PORT, DS1302_CLK);
+    GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
+    addr >>= 1;
+  }
+
+  DS1302_read_init();
+
+  // è¯»å–8 ä¸ª å­—èŠ‚
+  for (uint8_t i = 0; i < 8; i++)
+  {
+
+    uint8_t temp = 0, k = 1, j;
+    for (j = 0; j < 8; j++)
+    {
+      if (GPIO_ReadInputDataBit(DS1302_PORT, DS1302_DATA))
+      {
+        // BCD ç è½¬æ¢
+        if (j < 4)
+        {
+          temp += k;
+        }
+        else
+        {
+          temp += (k >> 4) * 10;
+        }
+      }
+      k <<= 1;
+      GPIO_SetBits(DS1302_PORT, DS1302_CLK);
+      GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
+    }
+    *(time_buf + i) = temp;
+  }
+
+  GPIO_ResetBits(DS1302_PORT, DS1302_CE);
 }
 
-void DS1302_read_time(uint8_t p[])
+// å†™å…¥æ—¶é—´
+void DS1302_WriteTime(uint8_t time_buf[])
 {
-    *p = ds1302_read_byte(ds1302_year_add); //Äê
-  *(p+1) = ds1302_read_byte(ds1302_month_add); //ÔÂ
-	*(p+2) = ds1302_read_byte(ds1302_date_add); //ÈÕ
-	*(p+3) = ds1302_read_byte(ds1302_hr_add); //Ê±
-	*(p+4) = ds1302_read_byte(ds1302_min_add); //·Ö
-	*(p+5) = ds1302_read_byte(ds1302_sec_add);//Ãë
-	*(p+6) = ds1302_read_byte(ds1302_day_add); //ÖÜ
+  ds1302_write_byte(DS1302_CONTROL_ADD, 0x00); //å…³é—­å†™ä¿æŠ¤
+
+  ds1302_write_byte(DS1302_SEC_ADD, 0x80); //æš‚åœæ—¶é’Ÿ
+
+  //ds1302_write_byte(ds1302_charger_add,0xa9); //æ¶“æµå……ç”µ
+
+  ds1302_write_byte(DS1302_YEAR_ADD, time_buf[0]);  //å¹´
+  ds1302_write_byte(DS1302_MONTH_ADD, time_buf[1]); //æœˆ
+  ds1302_write_byte(DS1302_DATE_ADD, time_buf[2]);  //æ—¥
+  ds1302_write_byte(DS1302_HR_ADD, time_buf[3]);    //æ—¶
+  ds1302_write_byte(DS1302_MIN_ADD, time_buf[4]);   //åˆ†
+  ds1302_write_byte(DS1302_SEC_ADD, time_buf[5]);   //ç§’
+  ds1302_write_byte(DS1302_DAY_ADD, time_buf[6]);   //å‘¨
+
+  ds1302_write_byte(DS1302_CONTROL_ADD, 0x80); //æ‰“å¼€å†™ä¿æŠ¤
+}
+
+// è¯»å–æ—¶é—´ é¡ºåºï¼š ç§’ï¼Œåˆ†ï¼Œæ—¶ï¼Œæ—¥æœŸï¼Œæœˆä»½ï¼Œæ˜ŸæœŸï¼Œå¹´
+void DS1302_ReadTime(uint8_t p[])
+{
+  ds1302_read_burst(DS1302_CLKBURST_ADD, p);
 }

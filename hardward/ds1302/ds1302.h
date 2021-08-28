@@ -3,24 +3,24 @@
 #include "sys.h"
 
 #define DS1302_PORT GPIOA
-#define DS1302_RST GPIO_Pin_4
-#define DS1302_DATA GPIO_Pin_5
-#define DS1302_CLK GPIO_Pin_6
+#define DS1302_CE GPIO_Pin_5
+#define DS1302_DATA GPIO_Pin_6
+#define DS1302_CLK GPIO_Pin_7
 
-// Ğ´Êı¾İµØÖ·£¬¶ÁÊı¾İ Òª+1
-#define ds1302_sec_add 0x80 //ÃëÊı¾İµØÖ·
-#define ds1302_min_add 0x82 //·ÖÊı¾İµØÖ·
-#define ds1302_hr_add 0x84 //Ê±Êı¾İµØÖ·
-#define ds1302_date_add 0x86 //ÈÕÊı¾İµØÖ·
-#define ds1302_month_add 0x88 //ÔÂÊı¾İµØÖ·
-#define ds1302_day_add 0x8a //ĞÇÆÚÊı¾İµØÖ·
-#define ds1302_year_add 0x8c //ÄêÊı¾İµØÖ·
-#define ds1302_control_add 0x8e //¿ØÖÆÊı¾İµØÖ·
-#define ds1302_charger_add 0x90
-#define ds1302_clkburst_add 0xbe
+// å†™æ•°æ®åœ°å€ï¼Œè¯»æ•°æ® è¦+1
+#define DS1302_SEC_ADD 0x80     //ç§’æ•°æ®åœ°å€
+#define DS1302_MIN_ADD 0x82     //åˆ†æ•°æ®åœ°å€
+#define DS1302_HR_ADD 0x84      //æ—¶æ•°æ®åœ°å€
+#define DS1302_DATE_ADD 0x86    //æ—¥æ•°æ®åœ°\\få€afdddsa
+#define DS1302_MONTH_ADD 0x88   //æœˆæ•°æ®åœ°å€
+#define DS1302_DAY_ADD 0x8a     //æ˜ŸæœŸæ•°æ®åœ°å€\fafa
+#define DS1302_YEAR_ADD 0x8c    //å¹´æ•°æ®åœ°å€
+#define DS1302_CONTROL_ADD 0x8e //æ§åˆ¶æ•°æ®åœ°å€
+#define DS1302_CHARGER_ADD 0x90
+#define DS1302_CLKBURST_ADD 0xbe // è¿ç»­å†™ BURST æ¨¡å¼
 
-// ¶¨Òåº¯Êı 
+// å®šä¹‰å‡½æ•°
 void DS1302_Init(void);
-void DS1302_write_time(uint8_t time_buf[]);//ÏòDS1302Ğ´ÈëÊ±ÖÓÊı¾İ
-void DS1302_read_time(uint8_t time_buf[]); // ´ÓDS1302¶ÁÈ¡Êı¾İ  
+void DS1302_WriteTime(uint8_t time_buf[]); // å‘DS1302å†™å…¥æ—¶é’Ÿæ•°æ® é¡ºåºï¼šå¹´ï¼Œæœˆä»½ï¼Œæ—¥æœŸï¼Œæ—¶ï¼Œåˆ†ï¼Œç§’ æ˜ŸæœŸ
+void DS1302_ReadTime(uint8_t time_buf[]);  // ä»DS1302è¯»å–æ•°æ®  é¡ºåºï¼š ç§’ï¼Œåˆ†ï¼Œæ—¶ï¼Œæ—¥æœŸï¼Œæœˆä»½ï¼Œæ˜ŸæœŸï¼Œå¹´
 #endif
