@@ -43,10 +43,7 @@ void DS1302_read_init(void)
 // 向ds1302 写一个字节数据
 void ds1302_write_byte(u8 addr, u8 data)
 {
-  u8 i, m = data / 10;
-
-  // BCD 码转换
-  data = (m << data) + data % 10;
+  uint8_t i;
 
   DS1302_write_init();
 
@@ -58,6 +55,12 @@ void ds1302_write_byte(u8 addr, u8 data)
     addr >>= 1;
   }
 
+  // 如果 读取时间日期，就用 BCD 码
+  if (addr < DS1302_RAM_FIRST)
+  {
+    data = ((data / 10) << 4) + (data % 10);
+  }
+
   for (i = 0; i < 8; i++)
   {
     GPIO_WriteBit(DS1302_PORT, DS1302_DATA, (BitAction)(data & 0x01));
@@ -65,6 +68,7 @@ void ds1302_write_byte(u8 addr, u8 data)
     GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
     data >>= 1;
   }
+
   GPIO_ResetBits(DS1302_PORT, DS1302_CE);
 }
 
@@ -72,7 +76,9 @@ void ds1302_write_byte(u8 addr, u8 data)
 u8 ds1302_read_byte(u8 addr)
 {
   uint8_t i, temp, k;
+
   DS1302_write_init();
+
   addr += 1;
   for (i = 0; i < 8; i++)
   {
@@ -90,17 +96,20 @@ u8 ds1302_read_byte(u8 addr)
   {
     if (GPIO_ReadInputDataBit(DS1302_PORT, DS1302_DATA))
     {
-      // BCD 码转换
-      if (i < 4)
-        temp += k;
-      else
-        temp += (k >> 4) * 10;
+      temp |= k;
     }
     k <<= 1;
     GPIO_SetBits(DS1302_PORT, DS1302_CLK);
     GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
   }
+
   GPIO_ResetBits(DS1302_PORT, DS1302_CE);
+
+  if (addr < DS1302_RAM_FIRST)
+  {
+    temp = (temp >> 4 & 0x0f) * 10 + (temp & 0x0f);
+  }
+
   return temp;
 }
 
@@ -121,33 +130,27 @@ void ds1302_read_burst(u8 addr, uint8_t *time_buf)
   }
 
   DS1302_read_init();
-
   // 读取8 个 字节
   for (uint8_t i = 0; i < 8; i++)
   {
-
     uint8_t temp = 0, k = 1, j;
     for (j = 0; j < 8; j++)
     {
       if (GPIO_ReadInputDataBit(DS1302_PORT, DS1302_DATA))
       {
-        // BCD 码转换
-        if (j < 4)
-        {
-          temp += k;
-        }
-        else
-        {
-          temp += (k >> 4) * 10;
-        }
+        temp |= k;
       }
       k <<= 1;
       GPIO_SetBits(DS1302_PORT, DS1302_CLK);
       GPIO_ResetBits(DS1302_PORT, DS1302_CLK);
     }
+
+    if (addr < DS1302_RAM_FIRST)
+    {
+      temp = (temp >> 4 & 0x0f) * 10 + (temp & 0x0f);
+    }
     *(time_buf + i) = temp;
   }
-
   GPIO_ResetBits(DS1302_PORT, DS1302_CE);
 }
 
@@ -157,8 +160,7 @@ void DS1302_WriteTime(uint8_t time_buf[])
   ds1302_write_byte(DS1302_CONTROL_ADD, 0x00); //关闭写保护
 
   ds1302_write_byte(DS1302_SEC_ADD, 0x80); //暂停时钟
-
-  //ds1302_write_byte(ds1302_charger_add,0xa9); //涓流充电
+  // ds1302_write_byte(ds1302_charger_add,0xa9); //涓流充电
 
   ds1302_write_byte(DS1302_YEAR_ADD, time_buf[0]);  //年
   ds1302_write_byte(DS1302_MONTH_ADD, time_buf[1]); //月
@@ -167,12 +169,29 @@ void DS1302_WriteTime(uint8_t time_buf[])
   ds1302_write_byte(DS1302_MIN_ADD, time_buf[4]);   //分
   ds1302_write_byte(DS1302_SEC_ADD, time_buf[5]);   //秒
   ds1302_write_byte(DS1302_DAY_ADD, time_buf[6]);   //周
-
-  ds1302_write_byte(DS1302_CONTROL_ADD, 0x80); //打开写保护
+  ds1302_write_byte(DS1302_CONTROL_ADD, 0x80);      //打开写保护
 }
 
 // 读取时间 顺序： 秒，分，时，日期，月份，星期，年
 void DS1302_ReadTime(uint8_t p[])
 {
   ds1302_read_burst(DS1302_CLKBURST_ADD, p);
+}
+
+void DS1302_WriteRam(uint8_t offset, uint8_t data)
+{
+  uint8_t addr = DS1302_RAM_FIRST + offset * 2;
+
+  ds1302_write_byte(DS1302_CONTROL_ADD, 0x00); //关闭写保护
+
+  ds1302_write_byte(addr, data);
+
+  ds1302_write_byte(DS1302_CONTROL_ADD, 0x80); //打开写保护
+}
+
+uint8_t DS1302_ReadRam(uint8_t offset)
+{
+  uint8_t addr = DS1302_RAM_FIRST + offset * 2;
+
+  return ds1302_read_byte(addr);
 }
