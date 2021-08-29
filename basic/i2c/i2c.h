@@ -14,11 +14,12 @@
 
 /* 定义主地址和传输速度  */
 #define I2C_HOST_ADDR 0xc0
-#define BUS_SPEED 400000
+#define BUS_SPEED 300000
 
 void I2C_Configuration(void);
 
-u8 I2C_SendByte(u8 SlaveAddr, u8 WriteAddr, u8 data);
+u8 I2C_WirteByte(u8 SlaveAddr, u8 WriteAddr, u8 data);
+u8 I2C_ReadByte(u8 SlaveAddr, u8 readAddr);
 u8 I2C_ReadBytes(u8 SlaveAddr, u8 readAddr, u8 *buffer, u8 length);
 
 #endif

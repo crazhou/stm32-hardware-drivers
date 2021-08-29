@@ -1,5 +1,5 @@
 #include "i2c.h"
-#include "stm32f10x.h"
+#include "sys.h"
 
 __IO uint32_t I2CTimeout = LONG_TIMEOUT;
 
@@ -52,7 +52,7 @@ void I2C_Configuration(void)
 }
 
 // 发送一个byte 的数据
-u8 I2C_SendByte(uint8_t SlaveAddr, uint8_t WriteAddr, uint8_t data)
+u8 I2C_WirteByte(uint8_t SlaveAddr, uint8_t WriteAddr, uint8_t data)
 {
   I2CTimeout = LONG_TIMEOUT;
   while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY))
@@ -176,4 +176,13 @@ u8 I2C_ReadBytes(uint8_t SlaveAddr, uint8_t readAddr, uint8_t *buffer, uint8_t l
   I2C_AcknowledgeConfig(I2C1, ENABLE);
 
   return 0;
+}
+
+u8 I2C_ReadByte(u8 SlaveAddr, u8 readAddr)
+{
+  u8 data;
+
+  I2C_ReadBytes(SlaveAddr, readAddr, &data, 1);
+
+  return data;
 }
