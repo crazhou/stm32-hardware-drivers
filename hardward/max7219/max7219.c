@@ -1,269 +1,261 @@
 #include "max7219.h"
 #include "fonts.h"
 
-// ×Ö·û´®ÖĞ²éÕÒ ×Ö·û
+uint8_t max_len = 1;
+
+const uint8_t t_display[] = {
+ // 0 1 2 3 4 5 6 7 8 9 A  B C D E F æ— 
+	0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71, 0x00 
+};
+
+
+// å­—ç¬¦ä¸²ä¸­æŸ¥æ‰¾ å­—ç¬¦ 
 int8_t indexOf(char *str, uint8_t ch)
 {
-  int8_t index = 0;
-
-  char tmp = str[index];
-
-  while (tmp != '\0')
-  {
-
-    if (tmp == ch)
-    {
-      return index;
-    }
-    index++;
-    tmp = str[index];
-  }
-
-  return -1;
+	int8_t index = 0;
+	
+	char tmp = str[index];
+	
+	while(tmp != '\0') {
+		if(tmp == ch) {
+			return index;
+		}
+		index++;
+		tmp = str[index];
+	}
+	
+	return -1;
 }
 
 /*
- * ³õÊ¼»¯ GPIO ¶Ë¿Ú
- * ÎÒµÄGPIO ÊµÊ± ÒÑ¾­ Ä¬ÈÏ³õÊ¼»¯ÁË£¬Èç¹ûÃ»ÓĞ£¬Çë·Å¿ªµÚ 32 ĞĞ×¢ÊÍ 
+ * åˆå§‹åŒ– GPIO ç«¯å£
  */
 void Max7219_GPIOInit(void)
 {
-  GPIO_InitTypeDef GPIO_InitStructure;
-  // RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB, ENABLE);
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_InitStructure.GPIO_Pin = MAX7219_CS_PIN | MAX7219_CLK_PIN | MAX7219_DATA_PIN;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(MAX7219PORT, &GPIO_InitStructure);
-
-  // Ê±ÖÓºÍÊı¾İÏßÀ­µÍ
-  GPIO_ResetBits(MAX7219PORT, MAX7219_CLK_PIN | MAX7219_DATA_PIN);
-
-  GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_InitStructure.GPIO_Pin = MAX7219_CS_PIN|MAX7219_CLK_PIN|MAX7219_DATA_PIN;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(MAX7219PORT, &GPIO_InitStructure);
+	// æ—¶é’Ÿå’Œæ•°æ®çº¿æ‹‰ä½
+	GPIO_ResetBits(MAX7219PORT,MAX7219_CLK_PIN|MAX7219_DATA_PIN);
+	
+	GPIO_SetBits(MAX7219PORT,MAX7219_CS_PIN);
 }
 
 /*
- * ÊıÂë¹Ü³õÊ¼»¯, ´«µİÒ»¸öÁÁ¶È
+ * æ•°ç ç®¡åˆå§‹åŒ–, ä¼ é€’ä¸€ä¸ªäº®åº¦
  */
-void Max7219_Digital_Init(uint8_t intensity)
+void Max7219_Digital_Init(uint8_t intensity, uint8_t len)
 {
-  Max7219_GPIOInit();
-
-  // µÈ´ıÆ÷¼ş³õÊ¼»¯
-  delay_ms(50);
-
-  Max7219_decode_mode(DECODE_ALL);
-  Max7219_intensity(intensity);
+	Max7219_GPIOInit();
+		
+	max_len = len;
+	
+	Max7219_shutdown(NORMAL_MODE);
+	Max7219_decode_mode(NO_DECODE_ALL);
+	Max7219_intensity(intensity);
   Max7219_scan_limit(0x07);
-  Max7219_shutdown(NORMAL_MODE);
+	// å¼€å§‹æµ‹è¯•
+	Max7219_test(0x01);	
+	Max7219_test(0x00);
 
-  // ¿ªÊ¼²âÊÔ
-  Max7219_test(0x01);
-  Max7219_test(0x00);
 }
 /*  
- * ³õÊ¼»¯ LED ÏÔÊ¾ÆÁ intensity ÎªÃ¿¸öÁÁ¶È 0x01 ~ 0x0f
+ * åˆå§‹åŒ– LED æ˜¾ç¤ºå±  len ä¸ºç‚¹é˜µå±ä¸ªæ•°ï¼Œ intensity ä¸ºæ¯ä¸ªäº®åº¦
  */
-void Max7219_Led_Init(uint8_t intensity)
+void Max7219_Led_Init(uint8_t intensity, uint8_t len)
 {
+	
+	Max7219_GPIOInit();	
+	max_len = len;
+	
+	Max7219_decode_mode(NO_DECODE_ALL);
+	Max7219_intensity(intensity);
+	Max7219_scan_limit(0x07);
+	Max7219_shutdown(NORMAL_MODE);
+	
+	// å¼€å§‹æµ‹è¯•
+	Max7219_test(0x01);
+	Max7219_test(0x00);
 
-  Max7219_GPIOInit();
-
-  // µÈ´ıÆ÷¼ş³õÊ¼»¯
-  delay_ms(50);
-
-  Max7219_decode_mode(NO_DECODE_ALL);
-
-  Max7219_intensity(intensity);
-
-  Max7219_scan_limit(0x07);
-
-  Max7219_shutdown(NORMAL_MODE);
-
-  // ¿ªÊ¼ÆÁÄ»²âÊÔ
-  Max7219_test(0x01);
-  delay_ms(1000);
-  Max7219_test(0x00);
 }
 
 void Max7219_WriteByte(uint8_t data)
 {
-  int8_t i;
-  uint8_t tmp;
+	
+	int8_t i;
+	uint8_t tmp;
 
-  for (i = 7; i >= 0; i--)
-  {
-    tmp = (data >> i) & 0x01;
-    GPIO_ResetBits(MAX7219PORT, MAX7219_CLK_PIN);
-    GPIO_WriteBit(MAX7219PORT, MAX7219_DATA_PIN, (BitAction)tmp);
-    GPIO_SetBits(MAX7219PORT, MAX7219_CLK_PIN);
-  }
+	for (i = 7; i >= 0; i--)
+	{
+		tmp = (data>>i) & 0x01;
+		GPIO_ResetBits(MAX7219PORT,MAX7219_CLK_PIN);
+		GPIO_WriteBit(MAX7219PORT, MAX7219_DATA_PIN, (BitAction)tmp);
+		GPIO_SetBits(MAX7219PORT,MAX7219_CLK_PIN);
+	}
 }
 /*
- * ÏòÄ³Æ¬µ¥¶ÀĞ´Êı¾İ 
- * addr Ğ´ÈëµØÖ· 
- * data Ğ´ÈëµÄÊı¾İ 
- * index  Ğ´µÚ¼¸Æ¬
+ * å‘æŸç‰‡å•ç‹¬å†™æ•°æ® 
+ * addr å†™å…¥åœ°å€ 
+ * data å†™å…¥çš„æ•°æ® 
+ * index  å†™ç¬¬å‡ ç‰‡ 0 ä»£è¡¨å…¨éƒ¨å†™å…¥
  */
 void Max7219_Send(uint8_t addr, uint8_t data, uint8_t index)
 {
+	
+	GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	for(int8_t j = 0; j < max_len; j++)
+	{
+		if(index-j == 1) {
+			Max7219_WriteByte(addr);
+			Max7219_WriteByte(data);
+		} else {
+			Max7219_WriteByte(0x00);
+			Max7219_WriteByte(0x00);
+		
+		}
+	}
+	
+	GPIO_SetBits(MAX7219PORT,MAX7219_CS_PIN);
 
-  GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  for (int8_t j = 0; j < LED_LEN; j++)
-  {
-    if (index - j == 1)
-    {
-      Max7219_WriteByte(addr);
-      Max7219_WriteByte(data);
-    }
-    else
-    {
-      Max7219_WriteByte(0x00);
-      Max7219_WriteByte(0x00);
-    }
-  }
-
-  GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
 }
 
 /*
- * ½øÈëµôµçÄ£Ê½
+ * è¿›å…¥æ‰ç”µæ¨¡å¼
  */
 int Max7219_shutdown(uint8_t mode)
 {
+	
+	GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	for(uint8_t i = 0;i < max_len;i++) {
+			
+		Max7219_WriteByte(SHUT_DOWN);
+		
+		Max7219_WriteByte(mode);
+	}
+	
+	GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
 
-  GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  for (uint8_t i = 0; i < LED_LEN; i++)
-  {
-
-    Max7219_WriteByte(SHUT_DOWN);
-
-    Max7219_WriteByte(mode);
-  }
-
-  GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  return 0;
+	return 0;
 }
 
 /*
- * ÉèÒëÂëÄ£Ê½
- *  NO_DECODE_ALL   0x00     ¶¼²»ÒëÂë
- *  DECODE_D0_ONLY   0x01    µÚÒ»¸ö²ÅÒëÂë 
- *	DECODE_D0D3_ONLY 0x0f    Ç°ËÄ¸ö²ÅÒëÂë 
- *  DECODE_ALL      0xff     È«¶¼ÒªÒëÂë
+ * è®¾è¯‘ç æ¨¡å¼
+ *  NO_DECODE_ALL   0x00     éƒ½ä¸è¯‘ç 
+ *  DECODE_D0_ONLY   0x01    ç¬¬ä¸€ä¸ªæ‰è¯‘ç  
+ *	DECODE_D0D3_ONLY 0x0f    å‰å››ä¸ªæ‰è¯‘ç  
+ *  DECODE_ALL      0xff     å…¨éƒ½è¦è¯‘ç 
  *
  */
 int Max7219_decode_mode(uint8_t mode)
 {
-
-  GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  for (uint8_t i = 0; i < LED_LEN; i++)
-  {
-
-    Max7219_WriteByte(DECODE_MODE);
-    Max7219_WriteByte(mode);
-  }
-
-  GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  return 0;
+	
+	GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	for(uint8_t i = 0;i < max_len;i++) {
+			
+		Max7219_WriteByte(DECODE_MODE);
+		Max7219_WriteByte(mode);
+	}
+	
+	GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	
+	return 0;
 }
 
 /* 
- * ÁÁ¶È¿ØÖÆ 
+ * äº®åº¦æ§åˆ¶ 
  * 0x00-0x0f
  */
 int Max7219_intensity(uint8_t mode)
 {
-
-  GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  for (uint8_t i = 0; i < LED_LEN; i++)
-  {
-
-    Max7219_WriteByte(INTENSITY);
-    Max7219_WriteByte(mode);
-  }
-
-  GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  return 0;
+	
+	GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	for(uint8_t i = 0;i < max_len;i++) {	
+		Max7219_WriteByte(INTENSITY);
+		Max7219_WriteByte(mode);
+	}
+	
+	GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	return 0;
 }
 
 /* 
- * É¨Ãè¿ØÖÆ  0 - 7
+ * æ‰«ææ§åˆ¶  0 - 7
  * 
  */
 int Max7219_scan_limit(uint8_t mode)
 {
-
-  GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  for (uint8_t i = 0; i < LED_LEN; i++)
-  {
-
-    Max7219_WriteByte(SCAN_LIMIT);
-    Max7219_WriteByte(mode);
-  }
-  GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  return 0;
+	
+	GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	for(uint8_t i = 0;i < max_len;i++) {
+		Max7219_WriteByte(SCAN_LIMIT);
+		Max7219_WriteByte(mode);
+	}
+	GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	
+	return 0;
 }
 
 /* 
- * ÏÔÊ¾¼ì²â 0, 1
+ * æ˜¾ç¤ºæ£€æµ‹ 0, 1
  * 
  */
 int Max7219_test(uint8_t mode)
 {
-
-  GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  for (uint8_t i = 0; i < LED_LEN; i++)
-  {
-
-    Max7219_WriteByte(DISPLAY_TEST);
-    Max7219_WriteByte(mode);
-  }
-
-  GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
-
-  return 0;
+	
+	GPIO_ResetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	for(uint8_t i = 0;i < max_len;i++) {
+		Max7219_WriteByte(DISPLAY_TEST);
+		Max7219_WriteByte(mode);
+	}
+	
+	GPIO_SetBits(MAX7219PORT, MAX7219_CS_PIN);
+	
+	return 0;
 }
 
-/* ÏÔÊ¾Êı×Ö */
+
+/* æ•°ç ç®¡æ˜¾ç¤ºæ•°å­— */
 void Max7219_digit(uint8_t digit, uint8_t data)
 {
-  int tmp = 0;
+	int tmp = 0;
+	
+	float t1 = (float)digit / 8;
+	
+	uint8_t t2 = ceil(t1);
+	
+	uint8_t dp = data & 0x80;
+	
+	char *str = "0123456789ABC";
+	
+	tmp = indexOf(str, data&0x7f);
 
-  uint8_t dp = data & 0x80;
-
-  char str[] = "0123456789-EHLP ";
-
-  tmp = indexOf(str, data & 0x7f);
-
-  if (tmp >= 0)
-  {
-
-    Max7219_Send(digit, (uint8_t)(tmp | dp), 1);
-  }
+	if(tmp >= 0) {
+		Max7219_Send((digit%8)?(digit%8):8, (uint8_t)(tmp|dp), t2);
+	}
 }
-/* ÏÔÊ¾×Ö·û */
+/* æ˜¾ç¤ºå­—ç¬¦ */
 void Max7219_display(uint8_t index, char data)
 {
-
-  uint8_t i;
-  const uint8_t *ptr;
-
-  ptr = &Font8.table[(data - 0x20) * 8];
-
-  // ÖğĞĞÉ¨Ãè
-  for (i = 1; i < 9; i++)
-  {
-    Max7219_Send(i, *ptr, index);
-    ptr++;
-  }
+	uint8_t i;
+	const uint8_t *ptr;
+	
+	ptr = &Font8.table[(data - 0x20) * 8];
+	
+	// é€è¡Œæ‰«æ
+	for(i= 1; i < 9;i++) {
+		Max7219_Send(i, *ptr, index);
+		ptr++;
+	}
+	
 }
